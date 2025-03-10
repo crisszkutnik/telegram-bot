@@ -1,0 +1,23 @@
+name: Create tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      semver:
+        description: "Which semver action to tag with (major | minor | patch)"
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  tag:
+    uses: crisszkutnik/gh-actions/.github/workflows/tag-js.yaml@main
+    with:
+      semver: ${{ inputs.semver }}
+    permissions:
+      contents: write
+    secrets:
+      ACTIONS_PERSONAL_ACCESS_TOKEN: ${{ secrets.ACTIONS_PERSONAL_ACCESS_TOKEN }}

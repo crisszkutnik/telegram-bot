@@ -1,0 +1,15 @@
+name: Create release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-push:
+    uses: crisszkutnik/gh-actions/.github/workflows/create-release.yaml@main
+    permissions:
+      contents: write
+      packages: write
+    with:
+      IMAGE_NAME: ${{ github.repository }}
