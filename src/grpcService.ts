@@ -1,6 +1,6 @@
 import { credentials, loadPackageDefinition } from "@grpc/grpc-js";
 import { loadSync } from "@grpc/proto-loader";
-import { EXPENSES_API_URL } from "./config";
+import { EXPENSES_API_URL, GRPC_WAIT_FOR_READY_TIMEOUT } from "./config";
 import type { ProtoGrpcType } from "./proto/Expense";
 import type { ExpenseReply } from "./proto/proto/ExpenseReply";
 import type { ExpensesClient } from "./proto/proto/Expenses";
@@ -34,16 +34,19 @@ export class GrpcService {
   init(): Promise<void> {
     return new Promise<void>((resolve) => {
       this.logger.info("Waiting for GRPC client to be ready");
-      this.client.waitForReady(Date.now() + 5000, (err) => {
-        if (!err) {
-          this.logger.info("GRPC client is ready");
-          resolve();
-          return;
-        }
+      this.client.waitForReady(
+        Date.now() + GRPC_WAIT_FOR_READY_TIMEOUT,
+        (err) => {
+          if (!err) {
+            this.logger.info("GRPC client is ready");
+            resolve();
+            return;
+          }
 
-        this.logger.error({ message: err });
-        process.exit(1);
-      });
+          this.logger.error({ message: err });
+          process.exit(1);
+        }
+      );
     });
   }
 
