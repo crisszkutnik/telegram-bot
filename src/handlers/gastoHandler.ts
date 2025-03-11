@@ -1,3 +1,4 @@
+import { UserError } from "../exceptions";
 import type { GrpcService } from "../grpcService";
 import type { NewExpenseRequest } from "../proto/proto/NewExpenseRequest";
 import { ChatStatus, type ActiveChatInfo } from "../telegramService";
@@ -68,7 +69,7 @@ export class GastoHandler implements MessageHandler {
 
   shouldHandle(
     ctx: TextMessageContext,
-    chatInfo: Map<number, ActiveChatInfo>,
+    chatInfo: Map<number, ActiveChatInfo>
   ): boolean {
     const text = ctx.message.text;
     const chatId = ctx.message.chat.id;
@@ -77,9 +78,9 @@ export class GastoHandler implements MessageHandler {
 
     return (
       text === "gasto" ||
+      newLines === 4 ||
       newLines === 5 ||
       newLines === 6 ||
-      newLines === 7 ||
       chatInfo.get(chatId)?.status === ChatStatus.SPENDING
     );
   }
@@ -99,7 +100,7 @@ export class GastoHandler implements MessageHandler {
       throw new UserError(
         `⚠️Notamos que estabas realizando otra operacion.⚠️
         
-        Para continuar con esta operacion escribe 'CANCELAR' para cancelar la operacion anterior y vuelve a intentar.`,
+        Para continuar con esta operacion escribe 'CANCELAR' para cancelar la operacion anterior y vuelve a intentar.`
       );
     }
 
@@ -108,7 +109,7 @@ export class GastoHandler implements MessageHandler {
 
   async handleSingleMessage(
     ctx: TextMessageContext,
-    lines: SingleMessageTypes,
+    lines: SingleMessageTypes
   ) {
     const name = lines[0];
     const paymentMethod = lines[1];
@@ -117,7 +118,7 @@ export class GastoHandler implements MessageHandler {
 
     if (amountIdx === -1 || (amountIdx !== 2 && amountIdx !== 3)) {
       throw new UserError(
-        "Error al leer el monto de tu mensaje. Recuerda escribirlo en el formato correcto",
+        "Error al leer el monto de tu mensaje. Recuerda escribirlo en el formato correcto"
       );
     }
 
@@ -162,9 +163,9 @@ export class GastoHandler implements MessageHandler {
       - *__Categoria:__* ${category}
       - *__Subcategoria:__* ${subcategory || ""}
       - *__Fecha:__* ${formattedDate}
-      `,
+      `
       ),
-      { parse_mode: "MarkdownV2" },
+      { parse_mode: "MarkdownV2" }
     );
   }
 
@@ -188,7 +189,7 @@ export class GastoHandler implements MessageHandler {
   private getSubcategory(
     lines: SingleMessageTypes,
     amountIdx: number,
-    dateIdx: number,
+    dateIdx: number
   ) {
     if (amountIdx + 3 === dateIdx) {
       return lines[dateIdx - 1];
@@ -199,7 +200,7 @@ export class GastoHandler implements MessageHandler {
 
   async handleSteps(
     ctx: TextMessageContext,
-    chatInfo: Map<number, ActiveChatInfo>,
+    chatInfo: Map<number, ActiveChatInfo>
   ) {
     let info = chatInfo.get(ctx.message.chat.id) as
       | ActiveChatInfo<SpendingChatInfo>
@@ -230,7 +231,7 @@ export class GastoHandler implements MessageHandler {
       case SpendingChatSteps.INITIAL:
         await ctx.telegram.sendMessage(
           ctx.message.chat.id,
-          "Introduci el nombre del gasto",
+          "Introduci el nombre del gasto"
         );
         info.data.step = SpendingChatSteps.NAME;
         break;
@@ -238,7 +239,7 @@ export class GastoHandler implements MessageHandler {
       case SpendingChatSteps.NAME:
         await ctx.telegram.sendMessage(
           ctx.message.chat.id,
-          "Introduci el monto del gasto. Si queres especificar la moneda tambien podes poniendo el codigo antes del gasto. Por ej: 'USD 150'",
+          "Introduci el monto del gasto. Si queres especificar la moneda tambien podes poniendo el codigo antes del gasto. Por ej: 'USD 150'"
         );
         info.data.step = SpendingChatSteps.AMOUNT;
         break;
@@ -246,7 +247,7 @@ export class GastoHandler implements MessageHandler {
       case SpendingChatSteps.AMOUNT:
         await ctx.telegram.sendMessage(
           ctx.message.chat.id,
-          "Introduci la categoria del gasto",
+          "Introduci la categoria del gasto"
         );
         info.data.step = SpendingChatSteps.CATEGORY;
         break;
@@ -254,7 +255,7 @@ export class GastoHandler implements MessageHandler {
       case SpendingChatSteps.CATEGORY:
         await ctx.telegram.sendMessage(
           ctx.message.chat.id,
-          "Introduci la subcategoria",
+          "Introduci la subcategoria"
         );
         info.data.step = SpendingChatSteps.SUBCATEGORY;
         break;
@@ -262,7 +263,7 @@ export class GastoHandler implements MessageHandler {
       case SpendingChatSteps.SUBCATEGORY:
         await ctx.telegram.sendMessage(
           ctx.message.chat.id,
-          "Introduci la fecha del gasto",
+          "Introduci la fecha del gasto"
         );
         info.data.step = SpendingChatSteps.DATE;
         break;
@@ -270,7 +271,7 @@ export class GastoHandler implements MessageHandler {
       case SpendingChatSteps.DATE:
         await ctx.telegram.sendMessage(
           ctx.message.chat.id,
-          "Gracias! Gasto registrado",
+          "Gracias! Gasto registrado"
         );
         chatInfo.delete(ctx.message.chat.id);
         break;

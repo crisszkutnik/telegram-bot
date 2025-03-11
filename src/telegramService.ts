@@ -10,6 +10,7 @@ import { GastoHandler } from "./handlers/gastoHandler";
 import { DefaultHandler } from "./handlers/defaultHandler";
 import { createLogger } from "./utils";
 import { randomUUID } from "node:crypto";
+import { UserError } from "./exceptions";
 
 export enum ChatStatus {
   SPENDING = "SPENDING",
@@ -48,6 +49,12 @@ export class TelegramService {
       const coercedContext = ctx as TextMessageContext;
       coercedContext.correlationId = randomUUID();
 
+      this.logger.info("Message received", {
+        messageContent: coercedContext.message.text,
+        chatId: coercedContext.message.chat.id,
+        correlationId: coercedContext.correlationId,
+      });
+
       this.handleMessage(coercedContext);
     });
   }
@@ -61,9 +68,13 @@ export class TelegramService {
     for (const handler of this.handlers) {
       if (handler.shouldHandle(ctx, chatStatus)) {
         try {
+          this.logger.info(
+            `Message will be handled by ${handler.constructor.name}`,
+            { correlationId: ctx.correlationId }
+          );
           await handler.handle(ctx, chatStatus);
         } catch (e: unknown) {
-          await this.handleError(ctx, e);
+          await this.handleError(ctx, e as Error);
         }
 
         break;
@@ -71,7 +82,7 @@ export class TelegramService {
     }
   }
 
-  async handleError(ctx: TextMessageContext, e: unknown) {
+  async handleError(ctx: TextMessageContext, e: Error) {
     if (e instanceof UserError) {
       await ctx.telegram.sendMessage(ctx.message.chat.id, e.message);
       return;
@@ -79,11 +90,12 @@ export class TelegramService {
 
     await ctx.telegram.sendMessage(
       ctx.message.chat.id,
-      "Ocurrio un error. Por favor vuelve a intentar",
+      "Ocurrio un error. Por favor vuelve a intentar"
     );
     chatStatus.delete(ctx.message.chat.id);
 
-    this.logger.error(String(e), {
+    this.logger.error({
+      message: e,
       correlationId: ctx.correlationId,
       originalMessage: ctx.message.text,
     });

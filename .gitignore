@@ -4,3 +4,4 @@ node_modules
 src/proto
 proto
 k8s-cluster-apps
+.vscode

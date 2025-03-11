@@ -1,4 +1,5 @@
 import winston from "winston";
+import { format } from "logform";
 
 export function countCharacter(string: string, character: string) {
   let count = 0;
@@ -37,5 +38,18 @@ export function createLogger(serviceName: string) {
     level: "silly",
     defaultMeta: { service: serviceName },
     transports: [new winston.transports.Console()],
+    format: format.combine(
+      format.timestamp(),
+      format.errors({ stack: true }),
+      format.json()
+    ),
   });
+}
+
+export function prepareErrorForLog(err: Error) {
+  return {
+    message: err.message,
+    name: err.name,
+    stack: err.stack,
+  };
 }

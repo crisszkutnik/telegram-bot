@@ -5,10 +5,12 @@ import type { ProtoGrpcType } from "./proto/Expense";
 import type { ExpenseReply } from "./proto/proto/ExpenseReply";
 import type { ExpensesClient } from "./proto/proto/Expenses";
 import type { NewExpenseRequest } from "./proto/proto/NewExpenseRequest";
+import { createLogger } from "./utils";
 
 const PROTO_PATH = "./proto/Expense.proto";
 
 export class GrpcService {
+  private readonly logger = createLogger(GrpcService.name);
   client: ExpensesClient;
   constructor() {
     const packageDefinition = loadSync(PROTO_PATH, {
@@ -20,13 +22,29 @@ export class GrpcService {
     });
 
     const protoDescriptor = loadPackageDefinition(
-      packageDefinition,
+      packageDefinition
     ) as unknown as ProtoGrpcType;
 
     this.client = new protoDescriptor.proto.Expenses(
       EXPENSES_API_URL,
-      credentials.createInsecure(),
+      credentials.createInsecure()
     );
+  }
+
+  init(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.logger.info("Waiting for GRPC client to be ready");
+      this.client.waitForReady(Date.now() + 5000, (err) => {
+        if (!err) {
+          this.logger.info("GRPC client is ready");
+          resolve();
+          return;
+        }
+
+        this.logger.error({ message: err });
+        process.exit(1);
+      });
+    });
   }
 
   addExpense(expense: NewExpenseRequest): Promise<void> {
@@ -34,16 +52,19 @@ export class GrpcService {
       this.client.AddExpense(expense, (err, response) => {
         if (err) {
           reject(err);
+          return;
         }
 
         if (!response) {
           reject("Fatal error. No response");
+          return;
         }
 
         const { success, message } = response as ExpenseReply;
 
         if (!success) {
           reject(message);
+          return;
         }
 
         resolve();
