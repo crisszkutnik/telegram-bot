@@ -95,6 +95,13 @@ export class KafkaService {
     const telegramUserId =
       await this.postgresService.getTelegramUserIdFromUserId(userId);
 
+    if (telegramUserId === undefined) {
+      this.logger.error(
+        `Failed to find telegramUserId for related userId ${userId}`
+      );
+      return;
+    }
+
     const msg = `
     Detectamos el siguiente gasto en la aplicacion *${notificationInfo.app}*
 

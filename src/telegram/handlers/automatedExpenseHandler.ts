@@ -7,7 +7,7 @@ import type {
 import { repliedMessageSenderIsBot } from "../../ctxHelpers";
 import type { PostgresService } from "../../postgres/postgresService";
 import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
-import { escapeMarkdownMessage } from "../../utils";
+import { createLogger, escapeMarkdownMessage } from "../../utils";
 
 /*
 
@@ -37,6 +37,8 @@ Modified field: somefield
 */
 
 export class AutomatedExpenseHandler implements MessageHandler {
+  private readonly logger = createLogger(AutomatedExpenseHandler.name);
+
   constructor(private readonly postgresService: PostgresService) {}
 
   shouldHandle(
@@ -78,10 +80,24 @@ export class AutomatedExpenseHandler implements MessageHandler {
       telegramUserId
     );
 
+    if (userId === undefined) {
+      this.logger.error(
+        `Failed to find userId for related telegramUserId ${userId}`
+      );
+      return;
+    }
+
     const notification = await this.postgresService.getNotification(
       userId,
       oldMessageId
     );
+
+    if (notification === undefined) {
+      this.logger.error(
+        `Failed to find related notification for (userId, telegramMessageId) = (${userId}, ${telegramUserId})`
+      );
+      return;
+    }
 
     const newExpense = {
       name: notification.vendor,
