@@ -1,13 +1,13 @@
-import { UserError } from "../exceptions";
-import type { GrpcService } from "../grpcService";
-import type { NewExpenseRequest } from "../proto/proto/NewExpenseRequest";
+import { UserError } from "../../exceptions";
+import type { GrpcService } from "../../grpcService";
+import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
 import { ChatStatus, type ActiveChatInfo } from "../telegramService";
 import {
   countCharacter,
-  escapeMessage,
+  escapeMarkdownMessage,
   formatDate,
   isValidDate,
-} from "../utils";
+} from "../../utils";
 import type {
   MessageHandler,
   TextMessageContext,
@@ -73,6 +73,10 @@ export class GastoHandler implements MessageHandler {
   ): boolean {
     const text = ctx.message.text;
     const chatId = ctx.message.chat.id;
+
+    if (ctx.message.reply_to_message) {
+      return false;
+    }
 
     const newLines = countCharacter(text, "\n");
 
@@ -153,7 +157,7 @@ export class GastoHandler implements MessageHandler {
 
     await ctx.telegram.sendMessage(
       ctx.message.chat.id,
-      escapeMessage(
+      escapeMarkdownMessage(
         `Se registro exitosamente el siguiente gasto
       
       - *__Nombre:__* ${name}

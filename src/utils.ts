@@ -29,8 +29,37 @@ export function formatDate(date: Date) {
     .replace(/\//g, "-");
 }
 
-export function escapeMessage(message: string) {
-  return message.replace(/-/g, "\\-");
+const specialChars = {
+  /*_: "\\_",
+  "*": "\\*",
+  "[": "\\[",
+  "]": "\\]",
+  "(": "\\(",
+  ")": "\\)",
+  "~": "\\~",
+  "`": "\\`",
+  ">": "\\>",
+  "#": "\\#",
+  "+": "\\+",*/
+  "-": "\\-",
+  /*"=": "\\=",
+  "|": "\\|",
+  "{": "\\{",
+  "}": "\\}",*/
+  ".": "\\.",
+  // "!": "\\!",
+};
+
+const escapeRegex = new RegExp(
+  "[" + Object.values(specialChars).join("") + "]",
+  "g"
+);
+
+export function escapeMarkdownMessage(message: string): string {
+  return message.replace(
+    escapeRegex,
+    (r) => specialChars[r as keyof typeof specialChars] || r
+  );
 }
 
 export function createLogger(serviceName: string) {
@@ -44,12 +73,4 @@ export function createLogger(serviceName: string) {
       format.json()
     ),
   });
-}
-
-export function prepareErrorForLog(err: Error) {
-  return {
-    message: err.message,
-    name: err.name,
-    stack: err.stack,
-  };
 }

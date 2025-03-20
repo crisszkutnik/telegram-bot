@@ -1,6 +1,6 @@
 import { Telegraf } from "telegraf";
-import { TELEGRAM_BOT_TOKEN } from "./config";
-import type { GrpcService } from "./grpcService";
+import { TELEGRAM_BOT_TOKEN } from "../config";
+import type { GrpcService } from "../grpcService";
 import type {
   MessageHandler,
   TextMessageContext,
@@ -8,9 +8,11 @@ import type {
 import { CancelHandler } from "./handlers/cancelHandler";
 import { GastoHandler } from "./handlers/gastoHandler";
 import { DefaultHandler } from "./handlers/defaultHandler";
-import { createLogger } from "./utils";
+import { createLogger, escapeMarkdownMessage } from "../utils";
 import { randomUUID } from "node:crypto";
-import { UserError } from "./exceptions";
+import { UserError } from "../exceptions";
+import { PostgresService } from "../postgres/postgresService";
+import { AutomatedExpenseHandler } from "./handlers/automatedExpenseHandler";
 
 export enum ChatStatus {
   SPENDING = "SPENDING",
@@ -32,12 +34,16 @@ export class TelegramService {
   readonly chatStatus = new Map<ChatId, ActiveChatInfo>();
   private readonly logger = createLogger(TelegramService.name);
 
-  constructor(private readonly grpcService: GrpcService) {
+  constructor(
+    private readonly grpcService: GrpcService,
+    private readonly postgresService: PostgresService
+  ) {
     this.bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
     this.handlers = [
       new CancelHandler(),
-      new GastoHandler(grpcService),
+      new GastoHandler(this.grpcService),
+      new AutomatedExpenseHandler(this.postgresService),
       new DefaultHandler(),
     ];
 
@@ -48,6 +54,8 @@ export class TelegramService {
 
       const coercedContext = ctx as TextMessageContext;
       coercedContext.correlationId = randomUUID();
+
+      coercedContext.message.reply_to_message;
 
       this.logger.info("Message received", {
         messageContent: coercedContext.message.text,
@@ -99,5 +107,15 @@ export class TelegramService {
       correlationId: ctx.correlationId,
       originalMessage: ctx.message.text,
     });
+  }
+
+  async sendMessage(chatId: string | number, msg: string) {
+    return await this.bot.telegram.sendMessage(
+      chatId,
+      escapeMarkdownMessage(msg),
+      {
+        parse_mode: "MarkdownV2",
+      }
+    );
   }
 }
