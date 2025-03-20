@@ -2,6 +2,11 @@ import { EachMessageHandler, EachMessagePayload, Kafka } from "kafkajs";
 import { createLogger } from "../utils";
 import { PostgresService } from "../postgres/postgresService";
 import { TelegramService } from "../telegram/telegramService";
+import {
+  KAFKA_BROKERS,
+  KAFKA_CLIENT_ID,
+  KAFKA_CONSUMER_GROUP_ID,
+} from "../config";
 
 interface NewExpenseMessage {
   userId: string;
@@ -40,10 +45,10 @@ export class KafkaService {
     private readonly telegramService: TelegramService
   ) {
     this.kafka = new Kafka({
-      clientId: "app",
-      brokers: ["localhost:9092"],
+      clientId: KAFKA_CLIENT_ID,
+      brokers: KAFKA_BROKERS,
     });
-    this.consumer = this.kafka.consumer({ groupId: "test-group" });
+    this.consumer = this.kafka.consumer({ groupId: KAFKA_CONSUMER_GROUP_ID });
   }
 
   async init() {
@@ -53,7 +58,7 @@ export class KafkaService {
 
     await Promise.all(
       topics.map(async (topic) => {
-        await this.consumer.subscribe({ topic, fromBeginning: true });
+        await this.consumer.subscribe({ topic, fromBeginning: false });
         this.logger.info(`Subscribed to topic ${topic}`);
       })
     );
