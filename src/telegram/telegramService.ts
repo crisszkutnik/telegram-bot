@@ -2,7 +2,7 @@ import { Telegraf } from "telegraf";
 import { TELEGRAM_BOT_TOKEN } from "../config";
 import type { GrpcService } from "../grpcService";
 import type {
-  MessageHandler,
+  ResponseOptions,
   TextMessageContext,
 } from "./handlers/messageHandler.interface";
 import { CancelHandler } from "./handlers/cancelHandler";
@@ -10,29 +10,15 @@ import { GastoHandler } from "./handlers/gastoHandler";
 import { DefaultHandler } from "./handlers/defaultHandler";
 import { createLogger, escapeMarkdownMessage } from "../utils";
 import { randomUUID } from "node:crypto";
-import { UserError } from "../exceptions";
 import type { PostgresService } from "../postgres/postgresService";
 import { AutomatedExpenseHandler } from "./handlers/automatedExpenseHandler";
-
-export enum ChatStatus {
-  SPENDING = "SPENDING",
-}
-
-export interface ActiveChatInfo<T = unknown> {
-  status: ChatStatus;
-  createdAt: number;
-  lastMessageAt: number;
-  data: T;
-}
-
-type ChatId = number;
-const chatStatus = new Map<ChatId, ActiveChatInfo>();
+import { MessageHandlerService } from "./messageHandlerService";
+import type { ExtraReplyMessage } from "telegraf/typings/telegram-types";
 
 export class TelegramService {
   readonly bot: Telegraf;
-  readonly handlers: MessageHandler[];
-  readonly chatStatus = new Map<ChatId, ActiveChatInfo>();
   private readonly logger = createLogger(TelegramService.name);
+  private readonly messageHandlerService;
 
   constructor(
     private readonly grpcService: GrpcService,
@@ -40,12 +26,12 @@ export class TelegramService {
   ) {
     this.bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
-    this.handlers = [
+    this.messageHandlerService = new MessageHandlerService(this, [
       new CancelHandler(),
       new GastoHandler(this.grpcService),
       new AutomatedExpenseHandler(this.grpcService, this.postgresService),
       new DefaultHandler(),
-    ];
+    ]);
 
     this.bot.on("message", async (ctx) => {
       if (!("message" in ctx) || !("text" in ctx.message)) {
@@ -63,7 +49,7 @@ export class TelegramService {
         correlationId: coercedContext.correlationId,
       });
 
-      this.handleMessage(coercedContext);
+      this.messageHandlerService.handleMessage(coercedContext);
     });
   }
 
@@ -72,50 +58,25 @@ export class TelegramService {
     await this.bot.launch();
   }
 
-  async handleMessage(ctx: TextMessageContext) {
-    for (const handler of this.handlers) {
-      if (handler.shouldHandle(ctx, chatStatus)) {
-        try {
-          this.logger.info(
-            `Message will be handled by ${handler.constructor.name}`,
-            { correlationId: ctx.correlationId }
-          );
-          await handler.handle(ctx, chatStatus);
-        } catch (e: unknown) {
-          await this.handleError(ctx, e as Error);
-        }
+  async sendMessage(
+    chatId: string | number,
+    msg: string,
+    options?: ResponseOptions
+  ) {
+    const finalMsg = options?.isMarkdown ? escapeMarkdownMessage(msg) : msg;
 
-        break;
-      }
-    }
-  }
+    const opts: ExtraReplyMessage = {};
 
-  async handleError(ctx: TextMessageContext, e: Error) {
-    if (e instanceof UserError) {
-      await ctx.telegram.sendMessage(ctx.message.chat.id, e.message);
-      return;
+    if (options?.isMarkdown) {
+      opts.parse_mode = "MarkdownV2";
     }
 
-    await ctx.telegram.sendMessage(
-      ctx.message.chat.id,
-      "Ocurrio un error. Por favor vuelve a intentar"
-    );
-    chatStatus.delete(ctx.message.chat.id);
+    if (options?.replyToMessage !== undefined) {
+      opts.reply_parameters = {
+        message_id: options.replyToMessage,
+      };
+    }
 
-    this.logger.error({
-      message: e,
-      correlationId: ctx.correlationId,
-      originalMessage: ctx.message.text,
-    });
-  }
-
-  async sendMessage(chatId: string | number, msg: string) {
-    return await this.bot.telegram.sendMessage(
-      chatId,
-      escapeMarkdownMessage(msg),
-      {
-        parse_mode: "MarkdownV2",
-      }
-    );
+    return await this.bot.telegram.sendMessage(chatId, finalMsg, opts);
   }
 }

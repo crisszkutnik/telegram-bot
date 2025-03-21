@@ -1,15 +1,15 @@
 import { UserError } from "../../exceptions";
 import type { GrpcService } from "../../grpcService";
 import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
-import { ChatStatus, type ActiveChatInfo } from "../telegramService";
 import {
   countCharacter,
-  escapeMarkdownMessage,
   formatDate,
   isValidDate,
   parseDate,
 } from "../../utils";
+import { type ActiveChatInfo, ChatStatus } from "../messageHandlerService";
 import type {
+  AdvancedResponse,
   MessageHandler,
   TextMessageContext,
 } from "./messageHandler.interface";
@@ -90,7 +90,10 @@ export class GastoHandler implements MessageHandler {
     );
   }
 
-  async handle(ctx: TextMessageContext, chatInfo: Map<number, ActiveChatInfo>) {
+  async handle(
+    ctx: TextMessageContext,
+    chatInfo: Map<number, ActiveChatInfo>
+  ): Promise<AdvancedResponse> {
     const lines = ctx.message.text.split("\n");
 
     if (lines.length === 1) {
@@ -109,13 +112,13 @@ export class GastoHandler implements MessageHandler {
       );
     }
 
-    await this.handleSingleMessage(ctx, lines as SingleMessageTypes);
+    return await this.handleSingleMessage(ctx, lines as SingleMessageTypes);
   }
 
   async handleSingleMessage(
     ctx: TextMessageContext,
     lines: SingleMessageTypes
-  ) {
+  ): Promise<AdvancedResponse> {
     const name = lines[0];
     const paymentMethod = lines[1];
 
@@ -156,10 +159,7 @@ export class GastoHandler implements MessageHandler {
 
     await this.grpcService.addExpense(allData);
 
-    await ctx.telegram.sendMessage(
-      ctx.message.chat.id,
-      escapeMarkdownMessage(
-        `Se registro exitosamente el siguiente gasto
+    const message = `Se registro exitosamente el siguiente gasto
       
       - *__Nombre:__* ${name}
       - *__Metodo de pago:__* ${paymentMethod}
@@ -168,10 +168,15 @@ export class GastoHandler implements MessageHandler {
       - *__Categoria:__* ${category}
       - *__Subcategoria:__* ${subcategory || ""}
       - *__Fecha:__* ${formattedDate}
-      `
-      ),
-      { parse_mode: "MarkdownV2" }
-    );
+      `;
+
+    return {
+      message,
+      options: {
+        isMarkdown: true,
+        replyToMessage: ctx.message.message_id,
+      },
+    };
   }
 
   private getSubcategory(

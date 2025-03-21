@@ -1,6 +1,6 @@
 import type { Message } from "telegraf/typings/core/types/typegram";
-import type { ActiveChatInfo } from "../telegramService";
 import type {
+  AdvancedResponse,
   MessageHandler,
   TextMessageContext,
 } from "./messageHandler.interface";
@@ -10,15 +10,10 @@ import type {
   PostgresService,
 } from "../../postgres/postgresService";
 import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
-import {
-  createLogger,
-  escapeMarkdownMessage,
-  formatDate,
-  isValidDate,
-  parseDate,
-} from "../../utils";
+import { createLogger, formatDate, isValidDate, parseDate } from "../../utils";
 import type { GrpcService } from "../../grpcService";
 import { UserError } from "../../exceptions";
+import type { ActiveChatInfo } from "../messageHandlerService";
 
 /*
 
@@ -83,7 +78,7 @@ export class AutomatedExpenseHandler implements MessageHandler {
   async handle(
     ctx: TextMessageContext,
     _: Map<number, ActiveChatInfo>
-  ): Promise<void> {
+  ): Promise<AdvancedResponse> {
     const oldMessage = ctx.message.reply_to_message as Message.TextMessage;
 
     const oldMessageId = oldMessage.message_id;
@@ -97,7 +92,7 @@ export class AutomatedExpenseHandler implements MessageHandler {
       this.logger.error(
         `Failed to find userId for related telegramUserId ${userId}`
       );
-      return;
+      throw new Error();
     }
 
     const notification = await this.postgresService.getNotification(
@@ -109,17 +104,14 @@ export class AutomatedExpenseHandler implements MessageHandler {
       this.logger.error(
         `Failed to find related notification for (userId, telegramMessageId) = (${userId}, ${telegramUserId})`
       );
-      return;
+      throw new Error();
     }
 
     const newExpense = this.processMessageText(ctx.message.text, notification);
 
     await this.grpcService.addExpense(newExpense);
 
-    await ctx.telegram.sendMessage(
-      ctx.message.chat.id,
-      escapeMarkdownMessage(
-        `Se guardo exitosamente el siguiente gasto:
+    const message = `Se guardo exitosamente el siguiente gasto:
           
           - *__Nombre:__* ${newExpense.name}
           - *__Metodo de pago:__* ${newExpense.paymentMethod}
@@ -128,20 +120,21 @@ export class AutomatedExpenseHandler implements MessageHandler {
           - *__Categoria:__* ${newExpense.category}
           - *__Subcategoria:__* ${newExpense.subcategory || ""}
           - *__Fecha:__* ${newExpense.date}
-          `
-      ),
-      {
-        parse_mode: "MarkdownV2",
-        reply_parameters: {
-          message_id: ctx.message.message_id,
-        },
-      }
-    );
+          `;
 
-    await this.postgresService.deleteNotification(
-      notification.user_id,
-      notification.telegram_message_id
-    );
+    return {
+      message: message,
+      options: {
+        isMarkdown: true,
+        replyToMessage: ctx.message.message_id,
+      },
+      postMessageHandle: async () => {
+        await this.postgresService.deleteNotification(
+          notification.user_id,
+          notification.telegram_message_id
+        );
+      },
+    };
   }
 
   private processMessageText(msgText: string, notification: Notification) {
