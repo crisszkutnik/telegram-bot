@@ -7,26 +7,12 @@ import {
   isValidDate,
   parseDate,
 } from "../../utils";
-import { type ActiveChatInfo, ChatStatus } from "../messageHandlerService";
+import type { ActiveChatInfo } from "../messageHandlerService";
 import type {
   AdvancedResponse,
   MessageHandler,
   TextMessageContext,
 } from "./messageHandler.interface";
-
-// This is telling you which should be the input of the next message received
-enum SpendingChatSteps {
-  INITIAL = "initial",
-  NAME = "name",
-  AMOUNT = "amount",
-  CATEGORY = "category",
-  SUBCATEGORY = "subcategory",
-  DATE = "date",
-}
-
-interface SpendingChatInfo {
-  step: SpendingChatSteps;
-}
 
 /*
 Paddle
@@ -70,47 +56,23 @@ export class GastoHandler implements MessageHandler {
 
   shouldHandle(
     ctx: TextMessageContext,
-    chatInfo: Map<number, ActiveChatInfo>
+    _chatInfo: Map<number, ActiveChatInfo>
   ): boolean {
-    const text = ctx.message.text;
-    const chatId = ctx.message.chat.id;
-
     if (ctx.message.reply_to_message) {
       return false;
     }
 
+    const text = ctx.message.text;
     const newLines = countCharacter(text, "\n");
 
-    return (
-      text === "gasto" ||
-      newLines === 4 ||
-      newLines === 5 ||
-      newLines === 6 ||
-      chatInfo.get(chatId)?.status === ChatStatus.SPENDING
-    );
+    return newLines === 4 || newLines === 5 || newLines === 6;
   }
 
   async handle(
     ctx: TextMessageContext,
-    chatInfo: Map<number, ActiveChatInfo>
+    _chatInfo: Map<number, ActiveChatInfo>
   ): Promise<AdvancedResponse> {
     const lines = ctx.message.text.split("\n");
-
-    if (lines.length === 1) {
-      await this.handleSteps(ctx, chatInfo);
-    }
-
-    const info = chatInfo.get(ctx.message.chat.id) as
-      | ActiveChatInfo<SpendingChatInfo>
-      | undefined;
-
-    if (info !== undefined) {
-      throw new UserError(
-        `⚠️Notamos que estabas realizando otra operacion.⚠️
-        
-        Para continuar con esta operacion escribe 'CANCELAR' para cancelar la operacion anterior y vuelve a intentar.`
-      );
-    }
 
     return await this.handleSingleMessage(ctx, lines as SingleMessageTypes);
   }
@@ -189,85 +151,5 @@ export class GastoHandler implements MessageHandler {
     }
 
     return undefined;
-  }
-
-  async handleSteps(
-    ctx: TextMessageContext,
-    chatInfo: Map<number, ActiveChatInfo>
-  ) {
-    let info = chatInfo.get(ctx.message.chat.id) as
-      | ActiveChatInfo<SpendingChatInfo>
-      | undefined;
-
-    const chatId = ctx.message.chat.id;
-
-    if (info === undefined) {
-      const obj = {
-        status: ChatStatus.SPENDING,
-        createdAt: Date.now(),
-        lastMessageAt: ctx.message.date,
-        data: {
-          step: SpendingChatSteps.INITIAL,
-        },
-      } as ActiveChatInfo<SpendingChatInfo>;
-      chatInfo.set(chatId, obj);
-      info = obj;
-    }
-
-    info.lastMessageAt = ctx.message.date;
-
-    if (info?.status !== ChatStatus.SPENDING) {
-      // fatal error
-    }
-
-    switch (info?.data.step) {
-      case SpendingChatSteps.INITIAL:
-        await ctx.telegram.sendMessage(
-          ctx.message.chat.id,
-          "Introduci el nombre del gasto"
-        );
-        info.data.step = SpendingChatSteps.NAME;
-        break;
-
-      case SpendingChatSteps.NAME:
-        await ctx.telegram.sendMessage(
-          ctx.message.chat.id,
-          "Introduci el monto del gasto. Si queres especificar la moneda tambien podes poniendo el codigo antes del gasto. Por ej: 'USD 150'"
-        );
-        info.data.step = SpendingChatSteps.AMOUNT;
-        break;
-
-      case SpendingChatSteps.AMOUNT:
-        await ctx.telegram.sendMessage(
-          ctx.message.chat.id,
-          "Introduci la categoria del gasto"
-        );
-        info.data.step = SpendingChatSteps.CATEGORY;
-        break;
-
-      case SpendingChatSteps.CATEGORY:
-        await ctx.telegram.sendMessage(
-          ctx.message.chat.id,
-          "Introduci la subcategoria"
-        );
-        info.data.step = SpendingChatSteps.SUBCATEGORY;
-        break;
-
-      case SpendingChatSteps.SUBCATEGORY:
-        await ctx.telegram.sendMessage(
-          ctx.message.chat.id,
-          "Introduci la fecha del gasto"
-        );
-        info.data.step = SpendingChatSteps.DATE;
-        break;
-
-      case SpendingChatSteps.DATE:
-        await ctx.telegram.sendMessage(
-          ctx.message.chat.id,
-          "Gracias! Gasto registrado"
-        );
-        chatInfo.delete(ctx.message.chat.id);
-        break;
-    }
   }
 }
