@@ -5,9 +5,20 @@ import type {
   TextMessageContext,
 } from "./messageHandler.interface";
 import { repliedMessageSenderIsBot } from "../../ctxHelpers";
-import type { PostgresService } from "../../postgres/postgresService";
+import type {
+  Notification,
+  PostgresService,
+} from "../../postgres/postgresService";
 import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
-import { createLogger, escapeMarkdownMessage } from "../../utils";
+import {
+  createLogger,
+  escapeMarkdownMessage,
+  formatDate,
+  isValidDate,
+  parseDate,
+} from "../../utils";
+import type { GrpcService } from "../../grpcService";
+import { UserError } from "../../exceptions";
 
 /*
 
@@ -39,7 +50,10 @@ Modified field: somefield
 export class AutomatedExpenseHandler implements MessageHandler {
   private readonly logger = createLogger(AutomatedExpenseHandler.name);
 
-  constructor(private readonly postgresService: PostgresService) {}
+  constructor(
+    private readonly grpcService: GrpcService,
+    private readonly postgresService: PostgresService
+  ) {}
 
   shouldHandle(
     ctx: TextMessageContext,
@@ -72,7 +86,6 @@ export class AutomatedExpenseHandler implements MessageHandler {
   ): Promise<void> {
     const oldMessage = ctx.message.reply_to_message as Message.TextMessage;
 
-    // const oldMessageText = oldMessage.text;
     const oldMessageId = oldMessage.message_id;
     const telegramUserId = ctx.message.from.id;
 
@@ -99,17 +112,9 @@ export class AutomatedExpenseHandler implements MessageHandler {
       return;
     }
 
-    const newExpense = {
-      name: notification.vendor,
-      paymentMethod: notification.payment_method,
-      currency: "ARS",
-      amount: notification.amount,
-      category: "",
-      subcategory: "",
-      date: "",
-    } as NewExpenseRequest;
+    const newExpense = this.processMessageText(ctx.message.text, notification);
 
-    // TODO: Actually save expense
+    await this.grpcService.addExpense(newExpense);
 
     await ctx.telegram.sendMessage(
       ctx.message.chat.id,
@@ -132,5 +137,73 @@ export class AutomatedExpenseHandler implements MessageHandler {
         },
       }
     );
+
+    await this.postgresService.deleteNotification(
+      notification.user_id,
+      notification.telegram_message_id
+    );
+  }
+
+  private processMessageText(msgText: string, notification: Notification) {
+    const parts = msgText.split("\n");
+
+    const category = parts[0];
+
+    const hasSubcategory = parts[1] !== "";
+    const subcategory = hasSubcategory ? parts[1] : "";
+
+    const firstOverrideIdx = hasSubcategory ? 3 : 2;
+
+    const overrideFields = this.getOverrideFields(firstOverrideIdx, parts);
+
+    const formattedDate = this.getFormattedDate(
+      overrideFields["Fecha"],
+      notification.timestamp
+    );
+
+    return {
+      name: overrideFields["Nombre"] || notification.vendor,
+      paymentMethod:
+        overrideFields["Metodo de pago"] || notification.payment_method,
+      currency: overrideFields["Moneda"] || "ARS",
+      amount: Number(overrideFields["Monto"]) || notification.amount,
+      category: category,
+      subcategory: subcategory,
+      date: formattedDate,
+    } as NewExpenseRequest;
+  }
+
+  private getFormattedDate(
+    overridedDate: string | undefined,
+    notificationTimestamp: Date
+  ) {
+    const date =
+      overridedDate !== undefined && overridedDate !== ""
+        ? parseDate(overridedDate)
+        : notificationTimestamp;
+
+    if (!isValidDate(date)) {
+      throw new UserError(`La fecha '${date}' no es una fecha valida`);
+    }
+
+    return formatDate(date);
+  }
+
+  private getOverrideFields(firstOverrideIdx: number, parts: string[]) {
+    const overrideFields: Record<string, string> = {};
+
+    for (let i = firstOverrideIdx; i < parts.length; i++) {
+      if (parts[i] === undefined) {
+        break;
+      }
+
+      const [fieldName, fieldValueFull] = parts[i].split(":");
+
+      const fieldValue = fieldValueFull.trim();
+
+      overrideFields[fieldName] = fieldValue;
+    }
+
+    return overrideFields;
   }
 }

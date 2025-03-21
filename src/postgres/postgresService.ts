@@ -2,13 +2,14 @@ import postgres from "postgres";
 import { DB_MAX_CONNECTIONS, DB_URL } from "../config";
 import { createLogger } from "../utils";
 
-interface Notification {
+export interface Notification {
   user_id: string;
   telegram_message_id: number;
   app: string;
   vendor: string;
   payment_method: string;
   amount: number;
+  timestamp: Date;
 }
 
 export class PostgresService {
@@ -47,7 +48,7 @@ export class PostgresService {
     telegramMessageId: number
   ): Promise<Notification | undefined> {
     const ret = await this.sql`
-      SELECT user_id, telegram_message_id, app, vendor, payment_method, amount
+      SELECT user_id, telegram_message_id, app, vendor, payment_method, amount, timestamp
       FROM public.notifications
       WHERE user_id = ${userId} AND telegram_message_id = ${telegramMessageId}
       LIMIT 1
@@ -65,7 +66,13 @@ export class PostgresService {
       "app",
       "payment_method",
       "telegram_message_id",
-      "vendor"
+      "vendor",
+      "timestamp"
     )}`;
+  }
+
+  async deleteNotification(userId: string, telegramMessageId: number) {
+    await this
+      .sql`DELETE FROM public.notifications WHERE user_id = ${userId} AND telegram_message_id = ${telegramMessageId}`;
   }
 }

@@ -29,6 +29,23 @@ export function formatDate(date: Date) {
     .replace(/\//g, "-");
 }
 
+// This function has limitations if we want to use it from different parts of the world
+// since it does not contemplate other timezones
+export function parseDate(dateStr: string) {
+  const lowerCaseStr = dateStr.toLowerCase();
+  if (lowerCaseStr === "hoy") {
+    return new Date();
+  }
+
+  if (lowerCaseStr === "ayer") {
+    const ret = new Date();
+    ret.setDate(ret.getDate() - 1);
+    return ret;
+  }
+
+  return new Date(dateStr);
+}
+
 const specialChars = {
   /*_: "\\_",
   "*": "\\*",
@@ -51,7 +68,7 @@ const specialChars = {
 };
 
 const escapeRegex = new RegExp(
-  "[" + Object.values(specialChars).join("") + "]",
+  `[${Object.values(specialChars).join("")}]`,
   "g"
 );
 

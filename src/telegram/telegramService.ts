@@ -11,7 +11,7 @@ import { DefaultHandler } from "./handlers/defaultHandler";
 import { createLogger, escapeMarkdownMessage } from "../utils";
 import { randomUUID } from "node:crypto";
 import { UserError } from "../exceptions";
-import { PostgresService } from "../postgres/postgresService";
+import type { PostgresService } from "../postgres/postgresService";
 import { AutomatedExpenseHandler } from "./handlers/automatedExpenseHandler";
 
 export enum ChatStatus {
@@ -43,7 +43,7 @@ export class TelegramService {
     this.handlers = [
       new CancelHandler(),
       new GastoHandler(this.grpcService),
-      new AutomatedExpenseHandler(this.postgresService),
+      new AutomatedExpenseHandler(this.grpcService, this.postgresService),
       new DefaultHandler(),
     ];
 

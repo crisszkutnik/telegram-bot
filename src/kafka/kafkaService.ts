@@ -1,7 +1,11 @@
-import { EachMessageHandler, EachMessagePayload, Kafka } from "kafkajs";
-import { createLogger } from "../utils";
-import { PostgresService } from "../postgres/postgresService";
-import { TelegramService } from "../telegram/telegramService";
+import {
+  Kafka,
+  type EachMessageHandler,
+  type EachMessagePayload,
+} from "kafkajs";
+import { createLogger, formatDate } from "../utils";
+import type { PostgresService } from "../postgres/postgresService";
+import type { TelegramService } from "../telegram/telegramService";
 import {
   KAFKA_BROKERS,
   KAFKA_CLIENT_ID,
@@ -15,6 +19,7 @@ interface NewExpenseMessage {
     vendor: string;
     paymentMethod: string;
     amount: number;
+    strTimestamptz: number;
   };
 }
 
@@ -26,7 +31,8 @@ interface NewExpenseMessage {
     "app": "Banco Galicia",
     "vendor": "SOME VENDOR",
     "paymentMethod": "VISA Galicia",
-    "amount": 400.45
+    "amount": 400.45,
+    "strTimestamptz": "2025-03-20 14:30:45 PDT"
   }
 }
 
@@ -74,7 +80,13 @@ export class KafkaService {
           return;
         }
 
-        handler(payload);
+        try {
+          await handler(payload);
+        } catch (e: unknown) {
+          this.logger.error("Fatal error processing event");
+          console.error(e);
+          this.logger.error({ messsage: e });
+        }
       },
     });
   }
@@ -102,6 +114,9 @@ export class KafkaService {
       return;
     }
 
+    const date = new Date(notificationInfo.strTimestamptz);
+    const formattedDate = formatDate(date);
+
     const msg = `
     Detectamos el siguiente gasto en la aplicacion *${notificationInfo.app}*
 
@@ -109,6 +124,7 @@ export class KafkaService {
     - *__Metodo de pago:__* ${notificationInfo.paymentMethod}
     - *__Moneda:__* ARS
     - *__Monto:__* ${notificationInfo.amount}
+    - *__Fecha:__* ${formattedDate}
     `;
 
     const finalMsg = await this.telegramService.sendMessage(
@@ -123,6 +139,7 @@ export class KafkaService {
       amount: kafkaPayload.notificationInfo.amount,
       user_id: userId,
       telegram_message_id: finalMsg.message_id,
+      timestamp: date,
     });
   }
 }

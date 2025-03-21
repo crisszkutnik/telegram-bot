@@ -7,6 +7,7 @@ import {
   escapeMarkdownMessage,
   formatDate,
   isValidDate,
+  parseDate,
 } from "../../utils";
 import type {
   MessageHandler,
@@ -134,7 +135,7 @@ export class GastoHandler implements MessageHandler {
 
     const dateIdx = lines.length - 1;
     const dateStr = lines[lines.length - 1];
-    const date = this.parseDate(dateStr);
+    const date = parseDate(dateStr);
 
     if (!isValidDate(date)) {
       throw new UserError(`La fecha ${dateStr} no es una fecha valida`);
@@ -171,23 +172,6 @@ export class GastoHandler implements MessageHandler {
       ),
       { parse_mode: "MarkdownV2" }
     );
-  }
-
-  // This function has limitations if we want to use it from different parts of the world
-  // since it does not contemplate other timezones
-  private parseDate(dateStr: string) {
-    const lowerCaseStr = dateStr.toLowerCase();
-    if (lowerCaseStr === "hoy") {
-      return new Date();
-    }
-
-    if (lowerCaseStr === "ayer") {
-      const ret = new Date();
-      ret.setDate(ret.getDate() - 1);
-      return ret;
-    }
-
-    return new Date(dateStr);
   }
 
   private getSubcategory(
