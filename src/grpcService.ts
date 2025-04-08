@@ -1,14 +1,16 @@
 import { credentials, loadPackageDefinition } from "@grpc/grpc-js";
 import { loadSync } from "@grpc/proto-loader";
-import { EXPENSES_API_URL } from "./config";
+import { EXPENSES_API_URL, GRPC_WAIT_FOR_READY_TIMEOUT } from "./config";
 import type { ProtoGrpcType } from "./proto/Expense";
 import type { ExpensesClient } from "./proto/proto/Expenses";
 import type { NewExpenseRequest } from "./proto/proto/NewExpenseRequest";
+import type { ExpenseReply } from "./proto/proto/ExpenseReply";
+import { createLogger } from "./utils";
 
 const PROTO_PATH = "./proto/Expense.proto";
 
 export class GrpcService {
-  // private readonly logger = createLogger(GrpcService.name);
+  private readonly logger = createLogger(GrpcService.name);
   client: ExpensesClient;
   constructor() {
     const packageDefinition = loadSync(PROTO_PATH, {
@@ -30,8 +32,6 @@ export class GrpcService {
   }
 
   init(): Promise<void> {
-    return new Promise((resolve) => resolve());
-    /*
     return new Promise<void>((resolve) => {
       this.logger.info("Waiting for GRPC client to be ready");
       this.client.waitForReady(
@@ -48,12 +48,9 @@ export class GrpcService {
         }
       );
     });
-    */
   }
 
-  addExpense(_expense: NewExpenseRequest): Promise<void> {
-    return new Promise((resolve) => resolve());
-    /*
+  addExpense(expense: NewExpenseRequest): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.client.AddExpense(expense, (err, response) => {
         if (err) {
@@ -75,6 +72,6 @@ export class GrpcService {
 
         resolve();
       });
-    });*/
+    });
   }
 }
