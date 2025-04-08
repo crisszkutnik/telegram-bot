@@ -10,7 +10,7 @@ import type {
   PostgresService,
 } from "../../postgres/postgresService";
 import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
-import { createLogger, formatDate, isValidDate, parseDate } from "../../utils";
+import { formatDate, isValidDate, parseDate } from "../../utils";
 import type { GrpcService } from "../../grpcService";
 import { UserError } from "../../exceptions";
 import type { ActiveChatInfo } from "../messageHandlerService";
@@ -43,8 +43,6 @@ Modified field: somefield
 */
 
 export class AutomatedExpenseHandler implements MessageHandler {
-  private readonly logger = createLogger(AutomatedExpenseHandler.name);
-
   constructor(
     private readonly grpcService: GrpcService,
     private readonly postgresService: PostgresService
@@ -89,10 +87,9 @@ export class AutomatedExpenseHandler implements MessageHandler {
     );
 
     if (userId === undefined) {
-      this.logger.error(
+      throw new Error(
         `Failed to find userId for related telegramUserId ${userId}`
       );
-      throw new Error();
     }
 
     const notification = await this.postgresService.getNotification(
@@ -101,10 +98,9 @@ export class AutomatedExpenseHandler implements MessageHandler {
     );
 
     if (notification === undefined) {
-      this.logger.error(
+      throw new Error(
         `Failed to find related notification for (userId, telegramMessageId) = (${userId}, ${telegramUserId})`
       );
-      throw new Error();
     }
 
     const newExpense = this.processMessageText(ctx.message.text, notification);

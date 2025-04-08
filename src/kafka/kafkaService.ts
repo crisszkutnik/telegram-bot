@@ -65,7 +65,7 @@ export class KafkaService {
     await Promise.all(
       topics.map(async (topic) => {
         await this.consumer.subscribe({ topic, fromBeginning: false });
-        this.logger.info(`Subscribed to topic ${topic}`);
+        this.logger.info(`Subscribed to topic '${topic}'`);
       })
     );
 
