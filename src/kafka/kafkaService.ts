@@ -129,7 +129,8 @@ export class KafkaService {
 
     const finalMsg = await this.telegramService.sendMessage(
       telegramUserId,
-      msg
+      msg,
+      { isMarkdown: true }
     );
 
     await this.postgresService.insertNotification({

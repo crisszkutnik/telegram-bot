@@ -23,6 +23,11 @@ export class PostgresService {
     });
   }
 
+  async init() {
+    await this.sql`SELECT COUNT(*) FROM users LIMIT 1`;
+    this.logger.info("Succesfully connected to database");
+  }
+
   async getUserFromTelegramUserId(
     telegramUserId: number
   ): Promise<string | undefined> {

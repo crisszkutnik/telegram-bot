@@ -9,6 +9,8 @@ async function main() {
 
   const postgresService = new PostgresService();
 
+  await postgresService.init();
+
   const telegramService = new TelegramService(grpcService, postgresService);
 
   const kafkaService = new KafkaService(postgresService, telegramService);
