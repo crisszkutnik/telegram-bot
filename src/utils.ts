@@ -46,6 +46,7 @@ export function parseDate(dateStr: string) {
   return new Date(dateStr);
 }
 
+// TODO: Make sure this works correctly. Commenting chars I have not had time to verify yet
 const specialChars = {
   /*_: "\\_",
   "*": "\\*",
