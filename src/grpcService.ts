@@ -51,8 +51,9 @@ export class GrpcService {
   }
 
   addExpense(expense: NewExpenseRequest): Promise<void> {
+    const finalExpense = this.trimExpenseRequest(expense);
     return new Promise<void>((resolve, reject) => {
-      this.client.AddExpense(expense, (err, response) => {
+      this.client.AddExpense(finalExpense, (err, response) => {
         if (err) {
           reject(err);
           return;
@@ -73,5 +74,26 @@ export class GrpcService {
         resolve();
       });
     });
+  }
+
+  private trimExpenseRequest(newExpense: NewExpenseRequest): NewExpenseRequest {
+    const newObj = structuredClone(newExpense);
+
+    type Entry = [keyof NewExpenseRequest, unknown];
+
+    // syntax magic
+    for (const [key, value] of Object.entries(newExpense) as Entry[]) {
+      if (typeof value === "string") {
+        /*
+          The TS compiler is getting confused here
+          and is having a hard time realizing that newObj[key] actually
+          is supposed to be holding a string
+        */
+        // @ts-ignore
+        newObj[key] = value.trim();
+      }
+    }
+
+    return newObj;
   }
 }
