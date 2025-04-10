@@ -2,9 +2,9 @@ import { credentials, loadPackageDefinition } from "@grpc/grpc-js";
 import { loadSync } from "@grpc/proto-loader";
 import { EXPENSES_API_URL, GRPC_WAIT_FOR_READY_TIMEOUT } from "./config";
 import type { ProtoGrpcType } from "./proto/Expense";
-import type { ExpenseReply } from "./proto/proto/ExpenseReply";
 import type { ExpensesClient } from "./proto/proto/Expenses";
 import type { NewExpenseRequest } from "./proto/proto/NewExpenseRequest";
+import type { ExpenseReply } from "./proto/proto/ExpenseReply";
 import { createLogger } from "./utils";
 
 const PROTO_PATH = "./proto/Expense.proto";

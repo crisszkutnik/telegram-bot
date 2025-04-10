@@ -23,7 +23,9 @@
     "@grpc/grpc-js": "1.12.6",
     "@grpc/proto-loader": "0.7.13",
     "dotenv": "16.4.7",
+    "kafkajs": "2.2.4",
     "logform": "^2.7.0",
+    "postgres": "3.4.5",
     "telegraf": "4.16.3",
     "winston": "3.17.0"
   },

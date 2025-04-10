@@ -1,4 +1,4 @@
-import type { ActiveChatInfo } from "../telegramService";
+import type { ActiveChatInfo } from "../messageHandlerService";
 import type {
   MessageHandler,
   TextMessageContext,
@@ -7,19 +7,17 @@ import type {
 export class CancelHandler implements MessageHandler {
   shouldHandle(
     ctx: TextMessageContext,
-    _chatInfo: Map<number, ActiveChatInfo>,
+    _chatInfo: Map<number, ActiveChatInfo>
   ): boolean {
     return ctx.message.text.toLowerCase() === "cancelar";
   }
 
   async handle(
     ctx: TextMessageContext,
-    chatInfo: Map<number, ActiveChatInfo>,
-  ): Promise<void> {
+    chatInfo: Map<number, ActiveChatInfo>
+  ): Promise<string> {
     chatInfo.delete(ctx.message.chat.id);
-    await ctx.telegram.sendMessage(
-      ctx.message.chat.id,
-      "Cancelado exitosamente",
-    );
+
+    return "Cancelado exitosamente";
   }
 }

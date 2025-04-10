@@ -24,6 +24,9 @@
 			"recommended": true,
 			"correctness": {
 				"noUnusedImports": "warn"
+			},
+			"complexity": {
+				"useLiteralKeys": "off"
 			}
 		}
 	},

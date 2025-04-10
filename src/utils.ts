@@ -29,8 +29,55 @@ export function formatDate(date: Date) {
     .replace(/\//g, "-");
 }
 
-export function escapeMessage(message: string) {
-  return message.replace(/-/g, "\\-");
+// This function has limitations if we want to use it from different parts of the world
+// since it does not contemplate other timezones
+export function parseDate(dateStr: string) {
+  const lowerCaseStr = dateStr.toLowerCase();
+  if (lowerCaseStr === "hoy") {
+    return new Date();
+  }
+
+  if (lowerCaseStr === "ayer") {
+    const ret = new Date();
+    ret.setDate(ret.getDate() - 1);
+    return ret;
+  }
+
+  return new Date(dateStr);
+}
+
+// TODO: Make sure this works correctly. Commenting chars I have not had time to verify yet
+const specialChars = {
+  /*_: "\\_",
+  "*": "\\*",
+  "[": "\\[",
+  "]": "\\]",
+  "(": "\\(",
+  ")": "\\)",
+  "~": "\\~",
+  "`": "\\`",
+  ">": "\\>",
+  "#": "\\#",
+  "+": "\\+",*/
+  "-": "\\-",
+  /*"=": "\\=",
+  "|": "\\|",
+  "{": "\\{",
+  "}": "\\}",*/
+  ".": "\\.",
+  // "!": "\\!",
+};
+
+const escapeRegex = new RegExp(
+  `[${Object.values(specialChars).join("")}]`,
+  "g"
+);
+
+export function escapeMarkdownMessage(message: string): string {
+  return message.replace(
+    escapeRegex,
+    (r) => specialChars[r as keyof typeof specialChars] || r
+  );
 }
 
 export function createLogger(serviceName: string) {
@@ -44,12 +91,4 @@ export function createLogger(serviceName: string) {
       format.json()
     ),
   });
-}
-
-export function prepareErrorForLog(err: Error) {
-  return {
-    message: err.message,
-    name: err.name,
-    stack: err.stack,
-  };
 }
