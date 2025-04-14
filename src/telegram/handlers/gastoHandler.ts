@@ -1,6 +1,8 @@
 import { UserError } from "../../exceptions";
 import type { GrpcService } from "../../grpcService";
-import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
+import type { PostgresService } from "../../postgres/postgresService";
+import type { ExpenseInfo__Output } from "../../proto/proto/ExpenseInfo";
+import type { NewExpenseRequest__Output } from "../../proto/proto/NewExpenseRequest";
 import {
   countCharacter,
   formatDate,
@@ -52,7 +54,10 @@ type SingleMessageTypes =
   | [string, string, string, string, string, string];
 
 export class GastoHandler implements MessageHandler {
-  constructor(private readonly grpcService: GrpcService) {}
+  constructor(
+    private readonly grpcService: GrpcService,
+    private readonly postgresService: PostgresService
+  ) {}
 
   shouldHandle(
     ctx: TextMessageContext,
@@ -81,6 +86,47 @@ export class GastoHandler implements MessageHandler {
     ctx: TextMessageContext,
     lines: SingleMessageTypes
   ): Promise<AdvancedResponse> {
+    const expenseInfo = this.getExpenseInfo(lines);
+
+    const telegramUserId = ctx.message.from.id;
+    const userId = await this.postgresService.getUserFromTelegramUserId(
+      telegramUserId
+    );
+
+    if (userId === undefined) {
+      throw new Error(
+        `Failed to find userId for related telegramUserId ${userId}`
+      );
+    }
+
+    const expenseRequest = {
+      userId,
+      expenseInfo,
+    } as NewExpenseRequest__Output;
+
+    await this.grpcService.addExpense(expenseRequest);
+
+    const message = `Se registro exitosamente el siguiente gasto
+      
+      - *__Nombre:__* ${expenseInfo.name}
+      - *__Metodo de pago:__* ${expenseInfo.paymentMethod}
+      - *__Moneda:__* ${expenseInfo.currency}
+      - *__Monto:__* ${expenseInfo.amount}
+      - *__Categoria:__* ${expenseInfo.category}
+      - *__Subcategoria:__* ${expenseInfo.subcategory || ""}
+      - *__Fecha:__* ${expenseInfo.date}
+      `;
+
+    return {
+      message,
+      options: {
+        isMarkdown: true,
+        replyToMessage: ctx.message.message_id,
+      },
+    };
+  }
+
+  private getExpenseInfo(lines: SingleMessageTypes): ExpenseInfo__Output {
     const name = lines[0];
     const paymentMethod = lines[1];
 
@@ -109,7 +155,8 @@ export class GastoHandler implements MessageHandler {
     const subcategory = this.getSubcategory(lines, amountIdx, dateIdx);
 
     const formattedDate = formatDate(date);
-    const allData = {
+
+    return {
       name,
       paymentMethod,
       amount,
@@ -117,28 +164,7 @@ export class GastoHandler implements MessageHandler {
       category,
       subcategory,
       date: formattedDate,
-    } as NewExpenseRequest;
-
-    await this.grpcService.addExpense(allData);
-
-    const message = `Se registro exitosamente el siguiente gasto
-      
-      - *__Nombre:__* ${name}
-      - *__Metodo de pago:__* ${paymentMethod}
-      - *__Moneda:__* ${currency}
-      - *__Monto:__* ${amount}
-      - *__Categoria:__* ${category}
-      - *__Subcategoria:__* ${subcategory || ""}
-      - *__Fecha:__* ${formattedDate}
-      `;
-
-    return {
-      message,
-      options: {
-        isMarkdown: true,
-        replyToMessage: ctx.message.message_id,
-      },
-    };
+    } as ExpenseInfo__Output;
   }
 
   private getSubcategory(

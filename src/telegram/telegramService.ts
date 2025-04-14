@@ -28,7 +28,7 @@ export class TelegramService {
 
     this.messageHandlerService = new MessageHandlerService(this, [
       new CancelHandler(),
-      new GastoHandler(this.grpcService),
+      new GastoHandler(this.grpcService, this.postgresService),
       new AutomatedExpenseHandler(this.grpcService, this.postgresService),
       new DefaultHandler(),
     ]);

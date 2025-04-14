@@ -3,9 +3,10 @@ import { loadSync } from "@grpc/proto-loader";
 import { EXPENSES_API_URL, GRPC_WAIT_FOR_READY_TIMEOUT } from "./config";
 import type { ProtoGrpcType } from "./proto/Expense";
 import type { ExpensesClient } from "./proto/proto/Expenses";
-import type { NewExpenseRequest } from "./proto/proto/NewExpenseRequest";
+import type { NewExpenseRequest__Output } from "./proto/proto/NewExpenseRequest";
 import type { ExpenseReply } from "./proto/proto/ExpenseReply";
 import { createLogger } from "./utils";
+import type { ExpenseInfo__Output } from "./proto/proto/ExpenseInfo";
 
 const PROTO_PATH = "./proto/Expense.proto";
 
@@ -50,8 +51,8 @@ export class GrpcService {
     });
   }
 
-  addExpense(expense: NewExpenseRequest): Promise<void> {
-    const finalExpense = this.trimExpenseRequest(expense);
+  addExpense(expense: NewExpenseRequest__Output): Promise<void> {
+    const finalExpense = this.trimRequestInfo(expense);
     return new Promise<void>((resolve, reject) => {
       this.client.AddExpense(finalExpense, (err, response) => {
         if (err) {
@@ -76,13 +77,21 @@ export class GrpcService {
     });
   }
 
-  private trimExpenseRequest(newExpense: NewExpenseRequest): NewExpenseRequest {
+  private trimRequestInfo(
+    newExpense: NewExpenseRequest__Output
+  ): NewExpenseRequest__Output {
     const newObj = structuredClone(newExpense);
 
-    type Entry = [keyof NewExpenseRequest, unknown];
+    const { expenseInfo } = newObj;
+
+    if (!expenseInfo) {
+      throw new Error(`Expense info cannot be undefined: ${newExpense}`);
+    }
+
+    type Entry = [keyof ExpenseInfo__Output, unknown];
 
     // syntax magic
-    for (const [key, value] of Object.entries(newExpense) as Entry[]) {
+    for (const [key, value] of Object.entries(expenseInfo) as Entry[]) {
       if (typeof value === "string") {
         /*
           The TS compiler is getting confused here
@@ -90,7 +99,7 @@ export class GrpcService {
           is supposed to be holding a string
         */
         // @ts-ignore
-        newObj[key] = value.trim();
+        expenseInfo[key] = value.trim();
       }
     }
 

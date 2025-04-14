@@ -9,11 +9,12 @@ import type {
   Notification,
   PostgresService,
 } from "../../postgres/postgresService";
-import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
+import type { NewExpenseRequest__Output } from "../../proto/proto/NewExpenseRequest";
 import { formatDate, isValidDate, parseDate } from "../../utils";
 import type { GrpcService } from "../../grpcService";
 import { UserError } from "../../exceptions";
 import type { ActiveChatInfo } from "../messageHandlerService";
+import type { ExpenseInfo__Output } from "../../proto/proto/ExpenseInfo";
 
 /*
 
@@ -103,19 +104,24 @@ export class AutomatedExpenseHandler implements MessageHandler {
       );
     }
 
-    const newExpense = this.processMessageText(ctx.message.text, notification);
+    const expenseInfo = this.processMessageText(ctx.message.text, notification);
 
-    await this.grpcService.addExpense(newExpense);
+    const expenseRequest = {
+      userId,
+      expenseInfo,
+    } as NewExpenseRequest__Output;
+
+    await this.grpcService.addExpense(expenseRequest);
 
     const message = `Se guardo exitosamente el siguiente gasto:
           
-          - *__Nombre:__* ${newExpense.name}
-          - *__Metodo de pago:__* ${newExpense.paymentMethod}
-          - *__Moneda:__* ${newExpense.currency}
-          - *__Monto:__* ${newExpense.amount}
-          - *__Categoria:__* ${newExpense.category}
-          - *__Subcategoria:__* ${newExpense.subcategory || ""}
-          - *__Fecha:__* ${newExpense.date}
+          - *__Nombre:__* ${expenseInfo.name}
+          - *__Metodo de pago:__* ${expenseInfo.paymentMethod}
+          - *__Moneda:__* ${expenseInfo.currency}
+          - *__Monto:__* ${expenseInfo.amount}
+          - *__Categoria:__* ${expenseInfo.category}
+          - *__Subcategoria:__* ${expenseInfo.subcategory || ""}
+          - *__Fecha:__* ${expenseInfo.date}
           `;
 
     return {
@@ -133,7 +139,10 @@ export class AutomatedExpenseHandler implements MessageHandler {
     };
   }
 
-  private processMessageText(msgText: string, notification: Notification) {
+  private processMessageText(
+    msgText: string,
+    notification: Notification
+  ): ExpenseInfo__Output {
     const parts = msgText.split("\n");
 
     const category = parts[0];
@@ -159,7 +168,7 @@ export class AutomatedExpenseHandler implements MessageHandler {
       category: category,
       subcategory: subcategory,
       date: formattedDate,
-    } as NewExpenseRequest;
+    } as ExpenseInfo__Output;
   }
 
   private getFormattedDate(
