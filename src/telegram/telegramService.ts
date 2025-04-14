@@ -22,7 +22,7 @@ export class TelegramService {
 
   constructor(
     private readonly grpcService: GrpcService,
-    private readonly postgresService: PostgresService
+    private readonly postgresService: PostgresService,
   ) {
     this.bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
@@ -61,7 +61,7 @@ export class TelegramService {
   async sendMessage(
     chatId: string | number,
     msg: string,
-    options?: ResponseOptions
+    options?: ResponseOptions,
   ) {
     const finalMsg = options?.isMarkdown ? escapeMarkdownMessage(msg) : msg;
 

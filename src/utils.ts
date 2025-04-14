@@ -70,13 +70,13 @@ const specialChars = {
 
 const escapeRegex = new RegExp(
   `[${Object.values(specialChars).join("")}]`,
-  "g"
+  "g",
 );
 
 export function escapeMarkdownMessage(message: string): string {
   return message.replace(
     escapeRegex,
-    (r) => specialChars[r as keyof typeof specialChars] || r
+    (r) => specialChars[r as keyof typeof specialChars] || r,
   );
 }
 
@@ -88,7 +88,7 @@ export function createLogger(serviceName: string) {
     format: format.combine(
       format.timestamp(),
       format.errors({ stack: true }),
-      format.json()
+      format.json(),
     ),
   });
 }

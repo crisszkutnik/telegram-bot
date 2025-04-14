@@ -29,7 +29,7 @@ export class PostgresService {
   }
 
   async getUserFromTelegramUserId(
-    telegramUserId: number
+    telegramUserId: number,
   ): Promise<string | undefined> {
     const ret = await this
       .sql`SELECT user_id FROM public.telegram_user_info WHERE telegram_user_id = ${telegramUserId} LIMIT 1`;
@@ -39,7 +39,7 @@ export class PostgresService {
   }
 
   async getTelegramUserIdFromUserId(
-    userId: string
+    userId: string,
   ): Promise<string | undefined> {
     const ret = await this
       .sql`SELECT telegram_user_id FROM public.telegram_user_info WHERE user_id = ${userId} LIMIT 1`;
@@ -50,7 +50,7 @@ export class PostgresService {
 
   async getNotification(
     userId: string,
-    telegramMessageId: number
+    telegramMessageId: number,
   ): Promise<Notification | undefined> {
     const ret = await this.sql`
       SELECT user_id, telegram_message_id, app, vendor, payment_method, amount, timestamp
@@ -72,7 +72,7 @@ export class PostgresService {
       "payment_method",
       "telegram_message_id",
       "vendor",
-      "timestamp"
+      "timestamp",
     )}`;
   }
 

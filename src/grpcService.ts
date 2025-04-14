@@ -3,10 +3,10 @@ import { loadSync } from "@grpc/proto-loader";
 import { EXPENSES_API_URL, GRPC_WAIT_FOR_READY_TIMEOUT } from "./config";
 import type { ProtoGrpcType } from "./proto/Expense";
 import type { ExpensesClient } from "./proto/proto/Expenses";
-import type { NewExpenseRequest__Output } from "./proto/proto/NewExpenseRequest";
+import type { NewExpenseRequest } from "./proto/proto/NewExpenseRequest";
 import type { ExpenseReply } from "./proto/proto/ExpenseReply";
 import { createLogger } from "./utils";
-import type { ExpenseInfo__Output } from "./proto/proto/ExpenseInfo";
+import type { ExpenseInfo } from "./proto/proto/ExpenseInfo";
 
 const PROTO_PATH = "./proto/Expense.proto";
 
@@ -23,12 +23,12 @@ export class GrpcService {
     });
 
     const protoDescriptor = loadPackageDefinition(
-      packageDefinition
+      packageDefinition,
     ) as unknown as ProtoGrpcType;
 
     this.client = new protoDescriptor.proto.Expenses(
       EXPENSES_API_URL,
-      credentials.createInsecure()
+      credentials.createInsecure(),
     );
   }
 
@@ -46,12 +46,12 @@ export class GrpcService {
 
           this.logger.error({ message: err });
           process.exit(1);
-        }
+        },
       );
     });
   }
 
-  addExpense(expense: NewExpenseRequest__Output): Promise<void> {
+  addExpense(expense: NewExpenseRequest): Promise<void> {
     const finalExpense = this.trimRequestInfo(expense);
     return new Promise<void>((resolve, reject) => {
       this.client.AddExpense(finalExpense, (err, response) => {
@@ -77,9 +77,7 @@ export class GrpcService {
     });
   }
 
-  private trimRequestInfo(
-    newExpense: NewExpenseRequest__Output
-  ): NewExpenseRequest__Output {
+  private trimRequestInfo(newExpense: NewExpenseRequest): NewExpenseRequest {
     const newObj = structuredClone(newExpense);
 
     const { expenseInfo } = newObj;
@@ -88,7 +86,7 @@ export class GrpcService {
       throw new Error(`Expense info cannot be undefined: ${newExpense}`);
     }
 
-    type Entry = [keyof ExpenseInfo__Output, unknown];
+    type Entry = [keyof ExpenseInfo, unknown];
 
     // syntax magic
     for (const [key, value] of Object.entries(expenseInfo) as Entry[]) {

@@ -1,8 +1,8 @@
 import { UserError } from "../../exceptions";
 import type { GrpcService } from "../../grpcService";
 import type { PostgresService } from "../../postgres/postgresService";
-import type { ExpenseInfo__Output } from "../../proto/proto/ExpenseInfo";
-import type { NewExpenseRequest__Output } from "../../proto/proto/NewExpenseRequest";
+import type { ExpenseInfo } from "../../proto/proto/ExpenseInfo";
+import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
 import {
   countCharacter,
   formatDate,
@@ -56,12 +56,12 @@ type SingleMessageTypes =
 export class GastoHandler implements MessageHandler {
   constructor(
     private readonly grpcService: GrpcService,
-    private readonly postgresService: PostgresService
+    private readonly postgresService: PostgresService,
   ) {}
 
   shouldHandle(
     ctx: TextMessageContext,
-    _chatInfo: Map<number, ActiveChatInfo>
+    _chatInfo: Map<number, ActiveChatInfo>,
   ): boolean {
     if (ctx.message.reply_to_message) {
       return false;
@@ -75,7 +75,7 @@ export class GastoHandler implements MessageHandler {
 
   async handle(
     ctx: TextMessageContext,
-    _chatInfo: Map<number, ActiveChatInfo>
+    _chatInfo: Map<number, ActiveChatInfo>,
   ): Promise<AdvancedResponse> {
     const lines = ctx.message.text.split("\n");
 
@@ -84,25 +84,24 @@ export class GastoHandler implements MessageHandler {
 
   async handleSingleMessage(
     ctx: TextMessageContext,
-    lines: SingleMessageTypes
+    lines: SingleMessageTypes,
   ): Promise<AdvancedResponse> {
     const expenseInfo = this.getExpenseInfo(lines);
 
     const telegramUserId = ctx.message.from.id;
-    const userId = await this.postgresService.getUserFromTelegramUserId(
-      telegramUserId
-    );
+    const userId =
+      await this.postgresService.getUserFromTelegramUserId(telegramUserId);
 
     if (userId === undefined) {
       throw new Error(
-        `Failed to find userId for related telegramUserId ${userId}`
+        `Failed to find userId for related telegramUserId ${userId}`,
       );
     }
 
     const expenseRequest = {
       userId,
       expenseInfo,
-    } as NewExpenseRequest__Output;
+    } as NewExpenseRequest;
 
     await this.grpcService.addExpense(expenseRequest);
 
@@ -126,7 +125,7 @@ export class GastoHandler implements MessageHandler {
     };
   }
 
-  private getExpenseInfo(lines: SingleMessageTypes): ExpenseInfo__Output {
+  private getExpenseInfo(lines: SingleMessageTypes): ExpenseInfo {
     const name = lines[0];
     const paymentMethod = lines[1];
 
@@ -134,7 +133,7 @@ export class GastoHandler implements MessageHandler {
 
     if (amountIdx === -1 || (amountIdx !== 2 && amountIdx !== 3)) {
       throw new UserError(
-        "Error al leer el monto de tu mensaje. Recuerda escribirlo en el formato correcto"
+        "Error al leer el monto de tu mensaje. Recuerda escribirlo en el formato correcto",
       );
     }
 
@@ -164,13 +163,13 @@ export class GastoHandler implements MessageHandler {
       category,
       subcategory,
       date: formattedDate,
-    } as ExpenseInfo__Output;
+    } as ExpenseInfo;
   }
 
   private getSubcategory(
     lines: SingleMessageTypes,
     amountIdx: number,
-    dateIdx: number
+    dateIdx: number,
   ) {
     if (amountIdx + 3 === dateIdx) {
       return lines[dateIdx - 1];

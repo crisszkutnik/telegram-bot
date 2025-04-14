@@ -26,7 +26,7 @@ export class MessageHandlerService {
 
   constructor(
     private readonly telegramService: TelegramService,
-    private readonly handlers: MessageHandler[]
+    private readonly handlers: MessageHandler[],
   ) {}
 
   async handleMessage(ctx: TextMessageContext) {
@@ -62,7 +62,7 @@ export class MessageHandlerService {
 
   private async runPostMessageHandler(
     ctx: TextMessageContext,
-    response: AdvancedResponse
+    response: AdvancedResponse,
   ) {
     try {
       if (response.postMessageHandle) {
@@ -85,7 +85,7 @@ export class MessageHandlerService {
 
     await ctx.telegram.sendMessage(
       ctx.message.chat.id,
-      "Ocurrio un error. Por favor vuelve a intentar"
+      "Ocurrio un error. Por favor vuelve a intentar",
     );
     chatStatus.delete(ctx.message.chat.id);
 

@@ -9,12 +9,12 @@ import type {
   Notification,
   PostgresService,
 } from "../../postgres/postgresService";
-import type { NewExpenseRequest__Output } from "../../proto/proto/NewExpenseRequest";
+import type { NewExpenseRequest } from "../../proto/proto/NewExpenseRequest";
 import { formatDate, isValidDate, parseDate } from "../../utils";
 import type { GrpcService } from "../../grpcService";
 import { UserError } from "../../exceptions";
 import type { ActiveChatInfo } from "../messageHandlerService";
-import type { ExpenseInfo__Output } from "../../proto/proto/ExpenseInfo";
+import type { ExpenseInfo } from "../../proto/proto/ExpenseInfo";
 
 /*
 
@@ -46,12 +46,12 @@ Modified field: somefield
 export class AutomatedExpenseHandler implements MessageHandler {
   constructor(
     private readonly grpcService: GrpcService,
-    private readonly postgresService: PostgresService
+    private readonly postgresService: PostgresService,
   ) {}
 
   shouldHandle(
     ctx: TextMessageContext,
-    _: Map<number, ActiveChatInfo>
+    _: Map<number, ActiveChatInfo>,
   ): boolean {
     if (
       !ctx.message.reply_to_message ||
@@ -69,38 +69,37 @@ export class AutomatedExpenseHandler implements MessageHandler {
       !repliedMessageSenderIsBot(ctx) &&
       oldMessage.text !== undefined &&
       oldMessage.text.startsWith(
-        "Detectamos el siguiente gasto en la aplicacion"
+        "Detectamos el siguiente gasto en la aplicacion",
       )
     );
   }
 
   async handle(
     ctx: TextMessageContext,
-    _: Map<number, ActiveChatInfo>
+    _: Map<number, ActiveChatInfo>,
   ): Promise<AdvancedResponse> {
     const oldMessage = ctx.message.reply_to_message as Message.TextMessage;
 
     const oldMessageId = oldMessage.message_id;
     const telegramUserId = ctx.message.from.id;
 
-    const userId = await this.postgresService.getUserFromTelegramUserId(
-      telegramUserId
-    );
+    const userId =
+      await this.postgresService.getUserFromTelegramUserId(telegramUserId);
 
     if (userId === undefined) {
       throw new Error(
-        `Failed to find userId for related telegramUserId ${userId}`
+        `Failed to find userId for related telegramUserId ${userId}`,
       );
     }
 
     const notification = await this.postgresService.getNotification(
       userId,
-      oldMessageId
+      oldMessageId,
     );
 
     if (notification === undefined) {
       throw new Error(
-        `Failed to find related notification for (userId, telegramMessageId) = (${userId}, ${telegramUserId})`
+        `Failed to find related notification for (userId, telegramMessageId) = (${userId}, ${telegramUserId})`,
       );
     }
 
@@ -109,7 +108,7 @@ export class AutomatedExpenseHandler implements MessageHandler {
     const expenseRequest = {
       userId,
       expenseInfo,
-    } as NewExpenseRequest__Output;
+    } as NewExpenseRequest;
 
     await this.grpcService.addExpense(expenseRequest);
 
@@ -133,7 +132,7 @@ export class AutomatedExpenseHandler implements MessageHandler {
       postMessageHandle: async () => {
         await this.postgresService.deleteNotification(
           notification.user_id,
-          notification.telegram_message_id
+          notification.telegram_message_id,
         );
       },
     };
@@ -141,8 +140,8 @@ export class AutomatedExpenseHandler implements MessageHandler {
 
   private processMessageText(
     msgText: string,
-    notification: Notification
-  ): ExpenseInfo__Output {
+    notification: Notification,
+  ): ExpenseInfo {
     const parts = msgText.split("\n");
 
     const category = parts[0];
@@ -156,7 +155,7 @@ export class AutomatedExpenseHandler implements MessageHandler {
 
     const formattedDate = this.getFormattedDate(
       overrideFields["Fecha"],
-      notification.timestamp
+      notification.timestamp,
     );
 
     return {
@@ -168,12 +167,12 @@ export class AutomatedExpenseHandler implements MessageHandler {
       category: category,
       subcategory: subcategory,
       date: formattedDate,
-    } as ExpenseInfo__Output;
+    } as ExpenseInfo;
   }
 
   private getFormattedDate(
     overridedDate: string | undefined,
-    notificationTimestamp: Date
+    notificationTimestamp: Date,
   ) {
     const date =
       overridedDate !== undefined && overridedDate !== ""

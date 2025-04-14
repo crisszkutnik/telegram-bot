@@ -21,10 +21,10 @@ export interface AdvancedResponse {
 export interface MessageHandler {
   shouldHandle(
     ctx: TextMessageContext,
-    chatInfo: Map<number, ActiveChatInfo>
+    chatInfo: Map<number, ActiveChatInfo>,
   ): boolean;
   handle(
     ctx: TextMessageContext,
-    chatInfo: Map<number, ActiveChatInfo>
+    chatInfo: Map<number, ActiveChatInfo>,
   ): Promise<AdvancedResponse | string>;
 }

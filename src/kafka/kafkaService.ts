@@ -48,7 +48,7 @@ export class KafkaService {
 
   constructor(
     private readonly postgresService: PostgresService,
-    private readonly telegramService: TelegramService
+    private readonly telegramService: TelegramService,
   ) {
     this.kafka = new Kafka({
       clientId: KAFKA_CLIENT_ID,
@@ -66,7 +66,7 @@ export class KafkaService {
       topics.map(async (topic) => {
         await this.consumer.subscribe({ topic, fromBeginning: false });
         this.logger.info(`Subscribed to topic '${topic}'`);
-      })
+      }),
     );
 
     this.logger.info("Starting Kafka listener");
@@ -96,7 +96,7 @@ export class KafkaService {
 
     if (msgStr === undefined) {
       this.logger.error(
-        `Message value for topic 'notification.new' is undefined`
+        `Message value for topic 'notification.new' is undefined`,
       );
       return;
     }
@@ -109,7 +109,7 @@ export class KafkaService {
 
     if (telegramUserId === undefined) {
       this.logger.error(
-        `Failed to find telegramUserId for related userId ${userId}`
+        `Failed to find telegramUserId for related userId ${userId}`,
       );
       return;
     }
@@ -130,7 +130,7 @@ export class KafkaService {
     const finalMsg = await this.telegramService.sendMessage(
       telegramUserId,
       msg,
-      { isMarkdown: true }
+      { isMarkdown: true },
     );
 
     await this.postgresService.insertNotification({
