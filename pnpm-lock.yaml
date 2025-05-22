@@ -24,8 +24,8 @@ importers:
         specifier: ^2.7.0
         version: 2.7.0
       postgres:
-        specifier: 3.4.6
-        version: 3.4.6
+        specifier: 3.4.7
+        version: 3.4.7
       telegraf:
         specifier: 4.16.3
         version: 4.16.3
@@ -514,8 +514,8 @@ packages:
     resolution: {integrity: sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg==}
     engines: {node: '>=0.10.0'}
 
-  postgres@3.4.6:
-    resolution: {integrity: sha512-MXrZVqgUfiirfZ0MqQqXqZQa6oM5OWFjfuaHVKl7v2zW25LnOJeLpQk+UUW0ZuP94fcS+fZVqyDYm9v5SIJ11Q==}
+  postgres@3.4.7:
+    resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
     engines: {node: '>=12'}
 
   protobufjs@5.0.3:
@@ -1094,7 +1094,7 @@ snapshots:
 
   path-is-absolute@1.0.1: {}
 
-  postgres@3.4.6: {}
+  postgres@3.4.7: {}
 
   protobufjs@5.0.3:
     dependencies:
