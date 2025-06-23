@@ -160,12 +160,12 @@ export class AutomatedExpenseHandler implements MessageHandler {
 
     return {
       name: overrideFields["Nombre"] || notification.vendor,
-      paymentMethod:
+      paymentMethodName:
         overrideFields["Metodo de pago"] || notification.payment_method,
       currency: overrideFields["Moneda"] || "ARS",
       amount: Number(overrideFields["Monto"]) || notification.amount,
-      category: category,
-      subcategory: subcategory,
+      categoryName: category,
+      subcategoryName: subcategory,
       date: formattedDate,
     } as ExpenseInfo;
   }

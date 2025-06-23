@@ -127,7 +127,7 @@ export class GastoHandler implements MessageHandler {
 
   private getExpenseInfo(lines: SingleMessageTypes): ExpenseInfo {
     const name = lines[0];
-    const paymentMethod = lines[1];
+    const paymentMethodName = lines[1];
 
     const amountIdx = lines.findIndex((l) => !Number.isNaN(Number(l)));
 
@@ -141,7 +141,7 @@ export class GastoHandler implements MessageHandler {
 
     const currency = amountIdx === 3 ? lines[2].toUpperCase() : "ARS";
 
-    const category = lines[amountIdx + 1];
+    const categoryName = lines[amountIdx + 1];
 
     const dateIdx = lines.length - 1;
     const dateStr = lines[lines.length - 1];
@@ -151,17 +151,17 @@ export class GastoHandler implements MessageHandler {
       throw new UserError(`La fecha ${dateStr} no es una fecha valida`);
     }
 
-    const subcategory = this.getSubcategory(lines, amountIdx, dateIdx);
+    const subcategoryName = this.getSubcategory(lines, amountIdx, dateIdx);
 
     const formattedDate = formatDate(date);
 
     return {
       name,
-      paymentMethod,
+      paymentMethodName,
       amount,
       currency,
-      category,
-      subcategory,
+      categoryName,
+      subcategoryName,
       date: formattedDate,
     } as ExpenseInfo;
   }
