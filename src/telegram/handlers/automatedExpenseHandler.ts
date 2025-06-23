@@ -115,11 +115,11 @@ export class AutomatedExpenseHandler implements MessageHandler {
     const message = `Se guardo exitosamente el siguiente gasto:
           
           - *__Nombre:__* ${expenseInfo.name}
-          - *__Metodo de pago:__* ${expenseInfo.paymentMethod}
+          - *__Metodo de pago:__* ${expenseInfo.paymentMethodName}
           - *__Moneda:__* ${expenseInfo.currency}
           - *__Monto:__* ${expenseInfo.amount}
-          - *__Categoria:__* ${expenseInfo.category}
-          - *__Subcategoria:__* ${expenseInfo.subcategory || ""}
+          - *__Categoria:__* ${expenseInfo.categoryName}
+          - *__Subcategoria:__* ${expenseInfo.subcategoryName || ""}
           - *__Fecha:__* ${expenseInfo.date}
           `;
 
