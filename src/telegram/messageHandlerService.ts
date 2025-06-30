@@ -1,4 +1,5 @@
 import { UserError } from "../exceptions";
+import { GrpcError } from "../grpcService";
 import { createLogger } from "../utils";
 import type {
   AdvancedResponse,
@@ -83,6 +84,11 @@ export class MessageHandlerService {
       return;
     }
 
+    if (e instanceof GrpcError) {
+      await this.handleGrpcError(ctx, e);
+      return;
+    }
+
     await ctx.telegram.sendMessage(
       ctx.message.chat.id,
       "Ocurrio un error. Por favor vuelve a intentar",
@@ -94,5 +100,9 @@ export class MessageHandlerService {
       correlationId: ctx.correlationId,
       originalMessage: ctx.message.text,
     });
+  }
+
+  private async handleGrpcError(ctx: TextMessageContext, e: GrpcError) {
+    await ctx.telegram.sendMessage(ctx.message.chat.id, e.getUserMessage());
   }
 }

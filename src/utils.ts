@@ -17,9 +17,11 @@ export function isValidDate(date: Date) {
   return date instanceof Date && !Number.isNaN(date.getTime());
 }
 
+// TODO: Rework date handling in this bot
 // Limitation here if we want to use it from another part of the world
+// format as YYYY-MM-DD
 export function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("es-AR", {
+  return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Argentina/Buenos_Aires",
     year: "numeric",
     month: "2-digit",

@@ -10,6 +10,58 @@ import type { ExpenseInfo } from "./proto/proto/ExpenseInfo";
 
 const PROTO_PATH = "./proto/Expense.proto";
 
+// Using 0 as success code was a questionable choice tbh
+// TODO: Investigate into using GRPC enums
+export enum ResponseCode {
+  Success = 0,
+  InternalError = 1,
+  InvalidPayload = 2,
+  InvalidPaymentMethod = 3,
+  InvalidCategory = 4,
+  InvalidSubcategory = 5,
+  InvalidDate = 6,
+  InvalidCurrency = 7,
+}
+
+export class GrpcError extends Error {
+  constructor(
+    message: string,
+    public readonly code: ResponseCode,
+    public readonly expenseRequest: NewExpenseRequest,
+  ) {
+    super(message);
+    this.name = "GrpcError";
+  }
+
+  getUserMessage(): string {
+    switch (this.code) {
+      case ResponseCode.InvalidPaymentMethod:
+        return `El metodo de pago ${this.expenseRequest.expenseInfo?.paymentMethodName} no existe. Por favor, elige un metodo de pago existente`;
+      case ResponseCode.InvalidCategory:
+        return `La categoria ${this.expenseRequest.expenseInfo?.categoryName} no existe. Por favor, elige una categoria existente`;
+      case ResponseCode.InvalidSubcategory:
+        return `La subcategoria ${this.expenseRequest.expenseInfo?.subcategoryName} no existe. Por favor, elige una subcategoria existente`;
+      case ResponseCode.InvalidDate:
+        return `Error al procesar la fecha ${this.expenseRequest.expenseInfo?.date} de tu mensaje. Recuerda escribirla en el formato correcto: DD/MM/YYYY u atajos como "hoy" o "ayer"`;
+      case ResponseCode.InvalidCurrency:
+        return `La moneda ${this.expenseRequest.expenseInfo?.currency} no es valida. Por favor, elige una moneda valida (ARS o USD)`;
+      default:
+        return "Ocurrio un error. Por favor vuelve a intentar";
+    }
+  }
+
+  static fromResponse(
+    response: ExpenseReply,
+    expenseRequest: NewExpenseRequest,
+  ): GrpcError {
+    return new GrpcError(
+      response.message || "Incomplete error",
+      response.code || ResponseCode.InternalError,
+      expenseRequest,
+    );
+  }
+}
+
 export class GrpcService {
   private readonly logger = createLogger(GrpcService.name);
   client: ExpensesClient;
@@ -61,14 +113,14 @@ export class GrpcService {
         }
 
         if (!response) {
-          reject("Fatal error. No response");
+          reject(new Error("Fatal error. No response"));
           return;
         }
 
-        const { success, message } = response as ExpenseReply;
+        const { code } = response as ExpenseReply;
 
-        if (!success) {
-          reject(message);
+        if (code !== ResponseCode.Success) {
+          reject(GrpcError.fromResponse(response, expense));
           return;
         }
 
