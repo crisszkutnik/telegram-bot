@@ -22,7 +22,7 @@
   "dependencies": {
     "@grpc/grpc-js": "1.12.6",
     "@grpc/proto-loader": "0.7.15",
-    "dotenv": "16.4.7",
+    "dotenv": "17.0.1",
     "kafkajs": "2.2.4",
     "logform": "^2.7.0",
     "postgres": "3.4.7",

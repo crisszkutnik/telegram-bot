@@ -15,8 +15,8 @@ importers:
         specifier: 0.7.15
         version: 0.7.15
       dotenv:
-        specifier: 16.4.7
-        version: 16.4.7
+        specifier: 17.0.1
+        version: 17.0.1
       kafkajs:
         specifier: 2.2.4
         version: 2.2.4
@@ -313,8 +313,8 @@ packages:
     resolution: {integrity: sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw==}
     engines: {node: '>=8'}
 
-  dotenv@16.4.7:
-    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
+  dotenv@17.0.1:
+    resolution: {integrity: sha512-GLjkduuAL7IMJg/ZnOPm9AnWKJ82mSE2tzXLaJ/6hD6DhwGfZaXG77oB8qbReyiczNxnbxQKyh0OE5mXq0bAHA==}
     engines: {node: '>=12'}
 
   emoji-regex@8.0.0:
@@ -913,7 +913,7 @@ snapshots:
 
   detect-libc@2.0.3: {}
 
-  dotenv@16.4.7: {}
+  dotenv@17.0.1: {}
 
   emoji-regex@8.0.0: {}
 
