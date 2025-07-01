@@ -1,4 +1,4 @@
-FROM node:22.14-slim AS base
+FROM node:22.17-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -14,7 +14,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run build
 
 # Build the final runtime version
-FROM node:22.14-slim AS runtime
+FROM node:22.17-slim AS runtime
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
