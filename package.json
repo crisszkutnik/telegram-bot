@@ -20,7 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@grpc/grpc-js": "1.12.7",
+    "@grpc/grpc-js": "1.14.5",
     "@grpc/proto-loader": "0.7.15",
     "dotenv": "16.4.7",
     "kafkajs": "2.2.4",
