@@ -49,8 +49,8 @@ importers:
         specifier: 9.1.7
         version: 9.1.7
       protoc-gen-js:
-        specifier: 3.21.4-4
-        version: 3.21.4-4
+        specifier: 4.0.3
+        version: 4.0.3
       typescript:
         specifier: ^5.8.2
         version: 5.8.3
@@ -197,10 +197,6 @@ packages:
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
-
-  adm-zip@0.5.10:
-    resolution: {integrity: sha512-x0HvcHqVJNTPk/Bw8JbLWlWoo6Wwnsug0fnYYro1HBrjxZ3G7/AZk7Ahv8JwDe1uIcz8eBqvu86FuF1POiG7vQ==}
-    engines: {node: '>=6.0'}
 
   agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
@@ -358,6 +354,9 @@ packages:
 
   fecha@4.2.3:
     resolution: {integrity: sha512-OP2IUU6HeYKJi3i0z4A19kHMQoLVs4Hc+DPqqxI2h/DPZHTm/vjsfC6P0b4jCMy14XizLBqvndQ+UilD7707Jw==}
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
@@ -569,8 +568,9 @@ packages:
     resolution: {integrity: sha512-mRUWCc3KUU4w1jU8sGxICXH/gNS94DvI1gxqDvBzhj1JpcsimQkYiOJfwsPUykUI5ZaspFbSgmBLER8IrQ3tqw==}
     engines: {node: '>=12.0.0'}
 
-  protoc-gen-js@3.21.4-4:
-    resolution: {integrity: sha512-BQUNVNm55pCiFl386SbAjM4D/S70N1jyZPKuTsb8RVibtn+FoiOdHlw4wG8DssvMRZTdI+DIL/WZYN3QBChurg==}
+  protoc-gen-js@4.0.3:
+    resolution: {integrity: sha512-bHCYHs7hhGcbMcP3SabPIuMQtwmH3svksyu3pXUyo0/D4ioLlCCe26iaVyoPGTNGokuRgJoLai9CrCmqY/RT4Q==}
+    engines: {node: '>=18'}
     hasBin: true
 
   readable-stream@3.6.2:
@@ -671,6 +671,10 @@ packages:
 
   undici-types@6.20.0:
     resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
+
+  undici@6.29.1:
+    resolution: {integrity: sha512-EvRlUt/QqAEvXdQeRMYUfwOQsfzpDztykrG2owGEE/rBOBoYv9uF39ZzsNDh4lTFHhTr2XOZjKkYgueD12ZmGA==}
+    engines: {node: '>=18.17'}
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
@@ -870,8 +874,6 @@ snapshots:
     dependencies:
       event-target-shim: 5.0.1
 
-  adm-zip@0.5.10: {}
-
   agent-base@6.0.2:
     dependencies:
       debug: 4.4.0
@@ -1000,6 +1002,8 @@ snapshots:
   event-target-shim@5.0.1: {}
 
   fecha@4.2.3: {}
+
+  fflate@0.8.3: {}
 
   fn.name@1.1.0: {}
 
@@ -1211,9 +1215,11 @@ snapshots:
       '@types/node': 22.13.17
       long: 5.3.1
 
-  protoc-gen-js@3.21.4-4:
+  protoc-gen-js@4.0.3:
     dependencies:
-      adm-zip: 0.5.10
+      fflate: 0.8.3
+    optionalDependencies:
+      undici: 6.29.1
 
   readable-stream@3.6.2:
     dependencies:
@@ -1315,6 +1321,9 @@ snapshots:
   typescript@5.8.3: {}
 
   undici-types@6.20.0: {}
+
+  undici@6.29.1:
+    optional: true
 
   util-deprecate@1.0.2: {}
 
